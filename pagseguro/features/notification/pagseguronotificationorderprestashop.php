@@ -122,7 +122,7 @@ class PagSeguroNotificationOrderPrestashop
             Util::createAddOrderHistory((int)$this->reference, $id_st_transaction);
         }
 
-        $this->saveTransactionId($this->obj_transaction->getCode(), $this->decryptId($this->obj_transaction->getReference()));
+        $this->saveTransactionId($this->obj_transaction->getCode(), $this->decryptId($this->obj_transaction->getReference()), $this->obj_transaction->getInstallmentCount() );
     }
 
     private function returnIdOrderByStatusPagSeguro($value)
@@ -146,7 +146,7 @@ class PagSeguroNotificationOrderPrestashop
         return isset($value);
     }
 
-    private function saveTransactionId($transaction, $reference)
+    private function saveTransactionId($transaction, $reference, $installmentcount)
     {
         $sql = "SELECT `id` FROM `" . _DB_PREFIX_ . "pagseguro_order` WHERE `id_order` = $reference";
 
@@ -155,14 +155,14 @@ class PagSeguroNotificationOrderPrestashop
         if ($pagseguro_order['id']) {
             $this->updateOrder($reference, $transaction, $pagseguro_order['id']);
         } else {
-            $this->saveOrder($reference, $transaction);
+            $this->saveOrder($reference, $transaction, $installmentcount);
         }
     }
 
-    private function saveOrder($id_order, $transaction)
+    private function saveOrder($id_order, $transaction,$installmentcount)
     {
-        $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'pagseguro_order` (`id_transaction`, `id_order`)
-                VALUES (\'' . pSQL($transaction) . '\', \'' . (int) $id_order . '\')';
+        $sql = 'INSERT INTO `' . _DB_PREFIX_ . 'pagseguro_order` (`id_transaction`, `id_order`,`installmentcount`)
+                VALUES (\'' . pSQL($transaction) . '\', \'' . (int) $id_order . '\', \'' . (int) $installmentcount . '\')';
 
         if (! Db::getInstance(_PS_USE_SQL_SLAVE_)->Execute($sql)) {
             die(Tools::displayError('Error when updating Transaction Code from PagSeguro in database'));
